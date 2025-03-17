@@ -102,7 +102,7 @@ jobs:
           FULL_IMAGE_URL=${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}
 
           # Create repo if it doesn't exist
-          aws ecr describe-repositories --repository-names ${ECR_REPOSITORY} || aws ecr create-repository --repository-name ${ECR_REPOSITORY}
+          aws ecr describe-repositories --repository-names "${ECR_REPOSITORY}" || aws ecr create-repository --repository-name "${ECR_REPOSITORY}"
 
           docker tag scicat_configured ${FULL_IMAGE_URL}
           docker push ${FULL_IMAGE_URL}
