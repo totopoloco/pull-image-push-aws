@@ -93,6 +93,9 @@ jobs:
 
       - name: Tag and push SciCat Docker Image
         id: push-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr-push.outputs.registry }}
+          ECR_REPOSITORY: scicat-backend
         run: |
           # Tag with SHA for immutability
           IMAGE_TAG=$(echo ${{ github.sha }} | cut -c1-7)-$(date +%s)
