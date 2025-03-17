@@ -1,0 +1,87 @@
+name: "Test to deploy SciCat backend"
+run-name: Deploy SciCat Backend to AWS by @${{ github.actor }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "The environment to deploy to"
+        required: true
+        default: 'integration'
+        type: choice
+        options:
+          - integration
+          - staging
+          - production
+env:
+  AWS_REGION: eu-west-1
+  SCICAT_IMAGE: ghcr.io/scicatproject/backend-next:latest
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  prepare-scicat-image:
+    name: Prepare SciCat Docker Image
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event.inputs.environment }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create config files
+        run: |
+          mkdir -p config
+          cat > config/functionalAccounts.json <<EOF
+          [
+           {
+              "username": "admin",
+              "email": "admin@scicat.project",
+              "password": "27f5fd86ae68fe740eef42b8bbd1d7d5",
+              "role": "admin",
+              "global": true
+           }
+          ]
+          EOF
+
+          cat > config/proposalTypes.json << EOF
+          {    
+            "DOORProposal": "DOOR Proposal",
+            "Beamtime": "Beamtime"
+          }
+          EOF
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+        # Display the login status if the login was successful
+        if: always()
+
+      - name: Pull SciCat Docker Image
+        run: |
+          docker create --name scicat_temp ${{ env.SCICAT_IMAGE }}
+          docker cp config/functionalAccounts.json scicat_temp:/home/node/app/functionalAccounts.json
+          docker cp config/proposalTypes.json scicat_temp:/home/node/app/proposalTypes.json
+          docker commit scicat_temp scicat_configured
+        if: always()
+
+      - name: Delete container to test above steps
+        run: |
+          docker rm scicat_temp
+          docker rmi ${{ env.SCICAT_IMAGE }}
+          docker rmi scicat_configured
+        if: always()
+
+      - id: credentials-image-push
+        name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.ROLE_ARN_DEPLOY }}
+          role-session-name: ${{ github.actor_id }}-${{ github.run_id }}
+          mask-aws-account-id: false # masking would affect unrelated steps if configured
+        if: always()
