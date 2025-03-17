@@ -69,12 +69,12 @@ jobs:
           docker commit scicat_temp scicat_configured
         if: always()
 
-      - name: Delete container to test above steps
-        run: |
-          docker rm scicat_temp
-          docker rmi ${{ env.SCICAT_IMAGE }}
-          docker rmi scicat_configured
-        if: always()
+#      - name: Delete container to test above steps
+#        run: |
+#          docker rm scicat_temp
+#          docker rmi ${{ env.SCICAT_IMAGE }}
+#          docker rmi scicat_configured
+#        if: always()
 
       - id: credentials-image-push
         name: Configure AWS Credentials
@@ -85,3 +85,25 @@ jobs:
           role-session-name: ${{ github.actor_id }}-${{ github.run_id }}
           mask-aws-account-id: false # masking would affect unrelated steps if configured
         if: always()
+
+      - id: login-ecr-push
+        name: Login to AWS ECR
+        uses: aws-actions/amazon-ecr-login@v2
+        if: always()
+
+      - name: Tag and push SciCat Docker Image
+        id: push-image
+        run: |
+          # Tag with SHA for immutability
+          IMAGE_TAG=$(echo ${{ github.sha }} | cut -c1-7)-$(date +%s)
+          FULL_IMAGE_URL=${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}
+
+          # Create repo if it doesn't exist
+          aws ecr describe-repositories --repository-names ${ECR_REPOSITORY} || aws ecr create-repository --repository-name ${ECR_REPOSITORY}
+
+          docker tag scicat_configured ${FULL_IMAGE_URL}
+          docker push ${FULL_IMAGE_URL}
+          echo "image_url=${FULL_IMAGE_URL}" >> $GITHUB_OUTPUT
+        if: always()
+    outputs:
+      image_url: ${{ steps.push-image.outputs.image_url }}
