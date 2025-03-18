@@ -13,7 +13,7 @@ AWS account and credentials for the account.
 ##### Short description of the workflow
 The workflow will pull an image (SciCat Backend) from the Docker Hub repository and push it to the AWS ECR repository.
 
-<img src="doc_elements/flow.png" alt="Flow" width="400px"/>
+<img src="doc_elements/flow.png" alt="Flow" width="500px"/>
 
 ##### Detailed description of the workflow
 The workflow is triggered manually by selecting the workflow in the Actions tab in the GitHub repository.
@@ -31,6 +31,7 @@ When the workflow is triggered, the following steps are executed:
 
 ### ECR repository
 The resulting image will be stored in the ECR repository in the AWS account as shown in the image below.
+<img src="doc_elements/ecr.jpeg" alt="ECR repository" width="500px"/>
 
 
 ## Configuration in AWS
@@ -51,7 +52,7 @@ The identity provider is configured in the AWS console in the IAM service.
   - Audience: sts.amazonaws.com
   - Click on the Add provider button 
  
-    <img alt="Add provider" src="doc_elements/add_provider.jpeg" width="400px"/>
+    <img alt="Add provider" src="doc_elements/add_provider.jpeg" width="500px"/>
 
 - Assign a role
   - Click on the Roles in the left menu
@@ -60,7 +61,7 @@ The identity provider is configured in the AWS console in the IAM service.
   - Select the Audience that was created
   - in GitHub organization, select the organization used for the deployment, in this case `totopoloco` for this repository.
  
-    <img alt="Assign role" src="doc_elements/assign_role.jpeg" width="400px"/>
+    <img alt="Assign role" src="doc_elements/assign_role.jpeg" width="500px"/>
 
 - Assign the permissions to the role
   - In the "Add permissions" screen, select the following permissions:
@@ -72,10 +73,10 @@ The identity provider is configured in the AWS console in the IAM service.
   - Assign the following name to the role: `GitHubActions-SciCat-Deployment-Role`
   - Once the role is created, it will be displayed in the list of roles
 
-    <img alt="Assign permissions" src="doc_elements/list_of_roles.jpeg" width="400px"/>
+    <img alt="Assign permissions" src="doc_elements/list_of_roles.jpeg" width="500px"/>
   - Select the newly created role and add an inline policy with the following policy:
   
-  <img src="doc_elements/inline_policy.jpeg" alt="Inline policy" width="400px"/>
+  <img src="doc_elements/inline_policy.jpeg" alt="Inline policy" width="500px"/>
 ```json
 {
   "Version": "2012-10-17",
@@ -100,7 +101,7 @@ The identity provider is configured in the AWS console in the IAM service.
 }   
 ```
 - The role is now created and can be used in the GitHub repository for the deployment.
-<img src="doc_elements/detail_specify_permissions.jpeg" alt="Specify permissions" width="400px"/>
+<img src="doc_elements/detail_specify_permissions.jpeg" alt="Specify permissions" width="500px"/>
 
 ## Configuration in GitHub
 The GitHub repository needs to be configured to use the AWS account for the deployment.
@@ -108,7 +109,7 @@ The GitHub repository needs to be configured to use the AWS account for the depl
 ### Environment variables
 
 In AWS copy the ARN of the role that was created in the previous step. See the following image for an example of the ARN.
-<img src="doc_elements/arn.jpeg" alt="ARN" width="400px"/>
+<img src="doc_elements/arn.jpeg" alt="ARN" width="500px"/>
 
 In the GitHub repository, go to the settings and select the Environment on the left menu.
 - Click on the New environment button.
@@ -123,4 +124,4 @@ The workflow for this demo is defined in the `.github/workflows/demo_pull_push.y
 
 The workflow is triggered manually by selecting the workflow in the Actions tab in the GitHub repository.
 
-<img src="doc_elements/github_actions.jpeg" alt="GitHub Actions" width="400px"/>
+<img src="doc_elements/github_actions.jpeg" alt="GitHub Actions" width="500px"/>
