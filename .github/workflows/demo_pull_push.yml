@@ -124,12 +124,14 @@ jobs:
           role-to-assume: ${{ secrets.ROLE_ARN_DEPLOY }}
           role-session-name: ${{ github.actor_id }}-${{ github.run_id }}
           mask-aws-account-id: false # masking would affect unrelated steps if configured
+        if: always()
       - name: Verify AWS access
         id: verify-aws-access
         run: |
           printf "aws_role_arn=%s\n" '${{ vars.ROLE_ARN_DEPLOY }}' >> "$GITHUB_OUTPUT"
           printf "aws_region=%s\n" "$AWS_REGION" >> "$GITHUB_OUTPUT"
           aws sts get-caller-identity --query Arn --output text
+        if: always()
     outputs:
        aws_region: ${{ steps.verify-aws-access.outputs.aws_region }}
        aws_role_arn: ${{ steps.verify-aws-access.outputs.aws_role_arn }}
