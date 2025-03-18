@@ -29,6 +29,8 @@ When the workflow is triggered, the following steps are executed:
 - The script will authenticate to AWS.
 - The script will push the image to the AWS ECR repository.
 
+A sample log of the workflow can be accesed [here](./doc_elements/job-logs.txt).
+
 ### ECR repository
 The resulting image will be stored in the ECR repository in the AWS account as shown in the image below.
 <img src="doc_elements/ecr.jpeg" alt="ECR repository" width="500px"/>
