@@ -101,9 +101,11 @@ jobs:
           IMAGE_TAG=$(echo ${{ github.sha }} | cut -c1-7)-$(date +%s)
           FULL_IMAGE_URL=${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}
 
-          # Create repo if it doesn't exist
-          aws ecr describe-repositories --repository-names "${ECR_REPOSITORY}" || aws ecr create-repository --repository-name "${ECR_REPOSITORY}"
-
+          # Check if repository exists without showing error output
+          aws ecr describe-repositories --repository-names "${ECR_REPOSITORY}" 2>/dev/null || \
+          echo "Repository doesn't exist, creating now..." && \
+          aws ecr create-repository --repository-name "${ECR_REPOSITORY}"
+  
           docker tag scicat_configured ${FULL_IMAGE_URL}
           docker push ${FULL_IMAGE_URL}
           echo "image_url=${FULL_IMAGE_URL}" >> $GITHUB_OUTPUT
