@@ -102,6 +102,31 @@ The identity provider is configured in the AWS console in the IAM service.
   ]
 }   
 ```
+  - Assign a Trust relationship to the role with the following trust policy (replace the `XXXXXXXX` with the AWS account number):
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Federated": "arn:aws:iam::XXXXXXXXXXXXXXX:oidc-provider/token.actions.githubusercontent.com"
+            },
+            "Action": "sts:AssumeRoleWithWebIdentity",
+            "Condition": {
+                "StringEquals": {
+                    "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+                },
+                "StringLike": {
+                    "token.actions.githubusercontent.com:sub": "repo:totopoloco/pull-image-push-aws:environment:*"
+                }
+            }
+        }
+    ]
+}
+```
+  - The purpose of the trust policy is to allow the GitHub organization to assume the role and push the image to the ECR repository.
+
 - The role is now created and can be used in the GitHub repository for the deployment.
 <img src="doc_elements/detail_specify_permissions.jpeg" alt="Specify permissions" width="500px"/>
 
