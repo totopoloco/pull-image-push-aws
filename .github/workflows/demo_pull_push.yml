@@ -108,6 +108,7 @@ jobs:
   
           docker tag scicat_configured ${FULL_IMAGE_URL}
           docker push ${FULL_IMAGE_URL}
+          echo "Pushed image: ${FULL_IMAGE_URL}"
           echo "image_url=${FULL_IMAGE_URL}" >> $GITHUB_OUTPUT
         if: always()
     outputs:
