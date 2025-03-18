@@ -8,6 +8,31 @@ The intention is a proof of concept for the image configuration and storage of t
 AWS account and credentials for the account. 
 [Amazon AWS](https://console.aws.amazon.com/)
 
+### Behind the scenes
+
+##### Short description of the workflow
+The workflow will pull an image (SciCat Backend) from the Docker Hub repository and push it to the AWS ECR repository.
+
+<img src="doc_elements/flow.png" alt="Flow" width="400px"/>
+
+##### Detailed description of the workflow
+The workflow is triggered manually by selecting the workflow in the Actions tab in the GitHub repository.
+When the workflow is triggered, the following steps are executed:
+- The workflow will pull the image from the Docker Hub repository.
+- The workflow creates the configuration files for the image in the `config` directory.
+  - The configuration files are `functionalAccounts.json`, `proposalTypes.json` and `.env`.
+- The workflow will add the files to the image:
+  - `functionalAccounts.json`
+  - `proposalTypes.json`
+  - `.env`
+- The script will commit this new modified image.
+- The script will authenticate to AWS.
+- The script will push the image to the AWS ECR repository.
+
+### ECR repository
+The resulting image will be stored in the ECR repository in the AWS account as shown in the image below.
+
+
 ## Configuration in AWS
 Different steps are needed to configure the AWS account for the deployment of the scicat-backend-next software stack.
 The description of how to configure the AWS account is described below.
@@ -99,25 +124,3 @@ The workflow for this demo is defined in the `.github/workflows/demo_pull_push.y
 The workflow is triggered manually by selecting the workflow in the Actions tab in the GitHub repository.
 
 <img src="doc_elements/github_actions.jpeg" alt="GitHub Actions" width="400px"/>
-
-### Behind the scenes
-
-##### Short description of the workflow
-The workflow will pull an image from the Docker Hub repository and push it to the AWS ECR repository.
-
-##### Detailed description of the workflow
-The workflow is triggered manually by selecting the workflow in the Actions tab in the GitHub repository.
-When the workflow is triggered, the following steps are executed:
-- The workflow will pull the image from the Docker Hub repository
-- The workflow creates the configuration files for the image in the `config` directory
-  - The configuration files are `functionalAccounts.json` and `proposalTypes.json` and `.env`
-- The workflow will add the files to the image
-  - functionalAccounts.json
-  - proposalTypes.json
-  - .env
-- The script will commit this new modified image
-- The script will authenticate to AWS
-- The script will push the image to the AWS ECR repository
-
-### ECR repository
-The resulting image will be stored in the ECR repository in the AWS account as shown in the image below.
