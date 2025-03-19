@@ -1,5 +1,5 @@
 name: "Test to deploy SciCat backend"
-run-name: (${{ github.event.inputs.environment }}) Deploy SciCat Backend to AWS by @${{ github.actor }}
+run-name: Deploy SciCat Backend to AWS by @${{ github.actor }}
 
 on:
   workflow_dispatch:
