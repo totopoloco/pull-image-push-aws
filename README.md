@@ -126,6 +126,7 @@ The identity provider is configured in the AWS console in the IAM service.
 }
 ```
   - The purpose of the trust policy is to allow the GitHub organization to assume the role and push the image to the ECR repository.
+<img src="doc_elements/trust_relationships.jpeg" alt="Trust policy" width="500px"/>
 
 - The role is now created and can be used in the GitHub repository for the deployment.
 <img src="doc_elements/detail_specify_permissions.jpeg" alt="Specify permissions" width="500px"/>

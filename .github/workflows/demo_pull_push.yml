@@ -14,7 +14,7 @@ on:
           - staging
           - production
 env:
-  AWS_REGION: eu-central-1
+  AWS_REGION: eu-west-1
   SCICAT_IMAGE: ghcr.io/scicatproject/backend-next:latest
 
 permissions:
