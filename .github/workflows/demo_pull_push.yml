@@ -16,6 +16,7 @@ on:
 env:
   AWS_REGION: eu-west-1
   SCICAT_IMAGE: ghcr.io/scicatproject/backend-next:latest
+  MONGODB_IMAGE: mongo:6.0.21
 
 permissions:
   contents: read
@@ -91,13 +92,6 @@ jobs:
           docker commit scicat_temp scicat_configured
         if: always()
 
-      #      - name: Delete container to test above steps
-      #        run: |
-      #          docker rm scicat_temp
-      #          docker rmi ${{ env.SCICAT_IMAGE }}
-      #          docker rmi scicat_configured
-      #        if: always()
-
       - id: credentials-image-push
         name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -136,6 +130,52 @@ jobs:
         if: always()
     outputs:
       image_url: ${{ steps.push-image.outputs.image_url }}
+
+  deploy-mongodb:
+    name: Deploy MongoDB Container
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event.inputs.environment }}
+    needs: prepare-scicat-image
+    steps:
+      - id: credentials-mongodb-deploy
+        name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.ROLE_ARN_DEPLOY }}
+          role-session-name: ${{ github.actor_id }}-${{ github.run_id }}-mongodb
+          mask-aws-account-id: false
+
+      - id: login-ecr-mongodb
+        name: Login to AWS ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Pull and Push MongoDB Image
+        id: push-mongodb-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr-mongodb.outputs.registry }}
+          # Deploy in the same repository as the SciCat backend
+          ECR_REPOSITORY: scicat-backend
+        run: |
+          # Pull official MongoDB image
+          docker pull ${{ env.MONGODB_IMAGE }}
+
+          # Tag with environment and SHA
+          IMAGE_TAG=${{ github.sha }}
+          FULL_IMAGE_URL=${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}
+
+          # Check if repository exists
+          aws ecr describe-repositories --repository-names "${ECR_REPOSITORY}" 2>/dev/null || \
+          (echo "[ERROR] Repository doesn't exist, exiting now!" && exit 1)
+
+          # Tag and push
+          docker tag ${{ env.MONGODB_IMAGE }} ${FULL_IMAGE_URL}
+          docker push ${FULL_IMAGE_URL}
+          echo "Pushed MongoDB image: ${FULL_IMAGE_URL}"
+          echo "mongodb_image_url=${FULL_IMAGE_URL}" >> $GITHUB_OUTPUT
+    outputs:
+      mongodb_image_url: ${{ steps.push-mongodb-image.outputs.mongodb_image_url }}
 
   validate-aws-access:
     name: Validate AWS Access
