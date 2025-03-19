@@ -120,7 +120,7 @@ jobs:
           ECR_REPOSITORY: scicat-backend
         run: |
           # Tag with SHA for immutability
-          IMAGE_TAG=$(echo ${{ github.sha }} | cut -c1-7)-$(date +%s)
+          IMAGE_TAG=${{ github.sha }}
           FULL_IMAGE_URL=${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}
           echo "Pushing image: ${FULL_IMAGE_URL}"
 
