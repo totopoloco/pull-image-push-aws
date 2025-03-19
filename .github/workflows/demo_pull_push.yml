@@ -127,9 +127,8 @@ jobs:
 
           # Check if repository exists without showing error output
           aws ecr describe-repositories --repository-names "${ECR_REPOSITORY}" 2>/dev/null || \
-          echo "[ERROR] Repository doesn't exist" && \
-          #aws ecr create-repository --repository-name "${ECR_REPOSITORY}"
-  
+          (echo "[ERROR] Repository doesn't exist, exiting now!" && exit 1)
+          
           docker tag scicat_configured ${FULL_IMAGE_URL}
           docker push ${FULL_IMAGE_URL}
           echo "Pushed image: ${FULL_IMAGE_URL}"
