@@ -155,8 +155,8 @@ jobs:
         id: push-mongodb-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr-mongodb.outputs.registry }}
-          # Deploy in the same repository as the SciCat backend
-          ECR_REPOSITORY: scicat-backend
+          # Deploy in its own repository
+          ECR_REPOSITORY: scicat-mongodb
         run: |
           # Pull official MongoDB image
           docker pull ${{ env.MONGODB_IMAGE }}
