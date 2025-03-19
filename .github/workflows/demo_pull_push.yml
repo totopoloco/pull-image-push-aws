@@ -116,6 +116,13 @@ jobs:
           # Tag with SHA for immutability
           IMAGE_TAG=${{ github.sha }}
           echo "Tagging image with: ${IMAGE_TAG}"
+          
+          # Verify registry is properly set
+          if [ -z "$ECR_REGISTRY" ]; then
+            echo "ERROR: ECR_REGISTRY is empty, cannot proceed"
+            exit 1
+          fi
+          
           FULL_IMAGE_URL=${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}
           echo "Pushing image: ${FULL_IMAGE_URL}"
 
