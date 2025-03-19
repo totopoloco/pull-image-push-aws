@@ -33,6 +33,20 @@ jobs:
 
       - name: Create config files
         run: |
+          # Create environment-specific variables
+          if [ "${{ github.event.inputs.environment }}" = "integration" ]; then
+            DB_NAME="integration"
+            ENV_PREFIX="integration-"
+          elif [ "${{ github.event.inputs.environment }}" = "staging" ]; then
+            DB_NAME="staging"
+            ENV_PREFIX="staging-"
+          elif [ "${{ github.event.inputs.environment }}" = "production" ]; then
+            DB_NAME="production"
+            ENV_PREFIX="production-"
+          else
+            DB_NAME="test"
+            ENV_PREFIX=""
+          fi
           mkdir -p config
           cat > config/functionalAccounts.json <<EOF
           [
@@ -52,6 +66,13 @@ jobs:
             "Beamtime": "Beamtime"
           }
           EOF
+          
+          cat > config/environment_variables <<EOF
+          MONGODB_URI="mongodb://mongodb:27017/${DB_NAME}"
+          JWT_SECRET=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2N2M4OGViMDNjZjMxMmRmMzg4ZjcxZTkiLCJ1c2VybmFtZSI6ImFkbWluIiwiZW1haWwiOiJhZG1pbkBzY2ljYXQucHJvamVjdCIsImF1dGhTdHJhdGVneSI6ImxvY2FsIiwiX192IjowLCJpZCI6IjY3Yzg4ZWIwM2NmMzEyZGYzODhmNzFlOSIsImlhdCI6MTc0MTE5NzA1MCwiZXhwIjoxNzQxMjAwNjUwfQ.UGrhORZDmTZZCsGfKMeT8sRw94xCFrqkiJQlmOenKSM
+          JWT_EXPIRES_IN=3600
+          PID_PREFIX="${ENV_PREFIX}dectris-cloud/"
+          EOF
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
@@ -66,6 +87,7 @@ jobs:
           docker create --name scicat_temp ${{ env.SCICAT_IMAGE }}
           docker cp config/functionalAccounts.json scicat_temp:/home/node/app/functionalAccounts.json
           docker cp config/proposalTypes.json scicat_temp:/home/node/app/proposalTypes.json
+          docker cp config/environment_variables scicat_temp:/home/node/app/.env
           docker commit scicat_temp scicat_configured
         if: always()
 
