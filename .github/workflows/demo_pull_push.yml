@@ -1,4 +1,4 @@
-name: "Test to deploy SciCat backend"
+name: "Deploy images of SciCat backend and MongoDB to AWS in ECR"
 run-name: (${{ github.event.inputs.environment }}) Deploy SciCat Backend to AWS by @${{ github.actor }}
 
 on:
@@ -14,9 +14,9 @@ on:
           - staging
           - production
 env:
-  AWS_REGION: eu-west-1
-  SCICAT_IMAGE: ghcr.io/scicatproject/backend-next:latest
-  MONGODB_IMAGE: mongo:6.0.21
+  AWS_REGION: ${{ vars.AWS_REGION || 'eu-west-1' }}
+  SCICAT_IMAGE: ghcr.io/scicatproject/backend-next:${{ vars.SCICAT_IMAGE_TAG || 'latest' }}
+  MONGODB_IMAGE: mongo:${{ vars.MONGODB_IMAGE_TAG || '6.0.21' }}
 
 permissions:
   contents: read
@@ -34,46 +34,37 @@ jobs:
 
       - name: Create config files
         run: |
-          # Create environment-specific variables
+          # Set environment directory based on input
           if [ "${{ github.event.inputs.environment }}" = "integration" ]; then
-            DB_NAME="integration"
-            ENV_PREFIX="integration-"
+            ENV_DIR="integration"
           elif [ "${{ github.event.inputs.environment }}" = "staging" ]; then
-            DB_NAME="staging"
-            ENV_PREFIX="staging-"
+            ENV_DIR="staging"
           elif [ "${{ github.event.inputs.environment }}" = "production" ]; then
-            DB_NAME="production"
-            ENV_PREFIX="production-"
+            ENV_DIR="production"
           else
-            DB_NAME="test"
-            ENV_PREFIX=""
+            ENV_DIR="integration"
           fi
+    
+          echo "Using config from directory: config/${ENV_DIR}"
+         
           mkdir -p config
-          cat > config/functionalAccounts.json <<EOF
-          [
-           {
-              "username": "admin",
-              "email": "admin@scicat.project",
-              "password": "27f5fd86ae68fe740eef42b8bbd1d7d5",
-              "role": "admin",
-              "global": true
-           }
-          ]
-          EOF
-
-          cat > config/proposalTypes.json << EOF
-          {    
-            "DOORProposal": "DOOR Proposal",
-            "Beamtime": "Beamtime"
-          }
-          EOF
+          if [ -f "config/${ENV_DIR}/functionalAccounts.json" ]; then
+            cp "config/${ENV_DIR}/functionalAccounts.json" config/functionalAccounts.json
+          else
+            echo "Functional accounts file not found, exiting now!" && exit 1
+          fi
           
-          cat > config/environment_variables <<EOF
-          MONGODB_URI="mongodb://mongodb:27017/${DB_NAME}"
-          JWT_SECRET=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2N2M4OGViMDNjZjMxMmRmMzg4ZjcxZTkiLCJ1c2VybmFtZSI6ImFkbWluIiwiZW1haWwiOiJhZG1pbkBzY2ljYXQucHJvamVjdCIsImF1dGhTdHJhdGVneSI6ImxvY2FsIiwiX192IjowLCJpZCI6IjY3Yzg4ZWIwM2NmMzEyZGYzODhmNzFlOSIsImlhdCI6MTc0MTE5NzA1MCwiZXhwIjoxNzQxMjAwNjUwfQ.UGrhORZDmTZZCsGfKMeT8sRw94xCFrqkiJQlmOenKSM
-          JWT_EXPIRES_IN=3600
-          PID_PREFIX="${ENV_PREFIX}dectris-cloud/"
-          EOF
+          if [ -f "config/${ENV_DIR}/proposalTypes.json" ]; then
+            cp "config/${ENV_DIR}/proposalTypes.json" config/proposalTypes.json
+          else
+            echo "Proposal types file not found, exiting now!" && exit 1
+          fi
+          
+          if [ -f "config/${ENV_DIR}/.env" ]; then
+            cp "config/${ENV_DIR}/.env" config/environment_variables
+          else
+            echo "Environment variables file not found, exiting now!" && exit 1
+          fi
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
@@ -97,7 +88,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: ${{ secrets.ROLE_ARN_DEPLOY }}
+          role-to-assume: ${{ vars.ROLE_ARN_IMAGE_PUSH }}
           role-session-name: ${{ github.actor_id }}-${{ github.run_id }}
           mask-aws-account-id: false # masking would affect unrelated steps if configured
         if: always()
@@ -111,10 +102,10 @@ jobs:
         id: push-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr-push.outputs.registry }}
-          ECR_REPOSITORY: ${{ github.event.inputs.environment }}/scicat-backend
+          ECR_REPOSITORY: scicat-backend
         run: |
           # Tag with SHA for immutability
-          IMAGE_TAG=${{ github.sha }}
+          IMAGE_TAG=${{ github.event.inputs.environment }}-$(echo ${{ github.sha }})
           echo "Tagging image with: ${IMAGE_TAG}"
           
           # Verify registry is properly set
@@ -150,7 +141,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: ${{ secrets.ROLE_ARN_DEPLOY }}
+          role-to-assume: ${{ vars.ROLE_ARN_IMAGE_PUSH }}
           role-session-name: ${{ github.actor_id }}-${{ github.run_id }}-mongodb
           mask-aws-account-id: false
 
@@ -183,29 +174,3 @@ jobs:
           echo "mongodb_image_url=${FULL_IMAGE_URL}" >> $GITHUB_OUTPUT
     outputs:
       mongodb_image_url: ${{ steps.push-mongodb-image.outputs.mongodb_image_url }}
-#
-#  validate-aws-access:
-#    name: Validate AWS Access
-#    runs-on: ubuntu-latest
-#    environment: ${{ github.event.inputs.environment }}
-#    steps:
-#      - id: assume-role
-#        name: Configure AWS Credentials
-#        uses: aws-actions/configure-aws-credentials@v4
-#        with:
-#          aws-region: ${{ env.AWS_REGION }}
-#          role-to-assume: ${{ secrets.ROLE_ARN_DEPLOY }}
-#          role-session-name: ${{ github.actor_id }}-${{ github.run_id }}
-#          mask-aws-account-id: false # masking would affect unrelated steps if configured
-#        if: always()
-#      - name: Verify AWS access
-#        id: verify-aws-access
-#        run: |
-#          printf "aws_role_arn=%s\n" '${{ vars.ROLE_ARN_DEPLOY }}' >> "$GITHUB_OUTPUT"
-#          printf "aws_region=%s\n" "$AWS_REGION" >> "$GITHUB_OUTPUT"
-#          aws sts get-caller-identity --query Arn --output text
-#        if: always()
-#    outputs:
-#       aws_region: ${{ steps.verify-aws-access.outputs.aws_region }}
-#       aws_role_arn: ${{ steps.verify-aws-access.outputs.aws_role_arn }}
-       # terraform_environment_name: ${{ vars.TERRAFORM_ENVIRONMENT_NAME }} # TODO: Add this to the outputruns-on:
