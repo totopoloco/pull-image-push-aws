@@ -18,11 +18,14 @@ inputs:
 
 outputs:
   aws_region:
-    description: 'The AWS region to use'
-    value: ${{ steps.verify-aws-access.outputs.aws_region }}
+    description: 'The configured AWS region'
+    value: ${{ inputs.aws-region }}
   aws_role_arn:
-    description: 'The ARN of the assumed role'
-    value: ${{ steps.verify-aws-access.outputs.aws_role_arn }}
+    description: 'The role ARN used for authentication'
+    value: ${{ inputs.role-to-assume }}
+  aws_account_id:
+    description: 'The AWS account ID'
+    value: ${{ steps.assume-role.outputs.aws-account-id }}
 
 runs:
   using: "composite"
@@ -40,6 +43,4 @@ runs:
       name: Verify AWS access
       shell: bash
       run: |
-        printf "aws_role_arn=%s\n" '${{ vars.ROLE_ARN_DEPLOY }}' >> "$GITHUB_OUTPUT" # make available to later jobs
-        printf "aws_region=%s\n" "$AWS_REGION" >> "$GITHUB_OUTPUT" # make available to later jobs
         aws sts get-caller-identity --query Arn --output text

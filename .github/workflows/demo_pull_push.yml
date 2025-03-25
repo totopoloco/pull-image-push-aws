@@ -141,7 +141,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - id: session-suffx
+      - id: session-suffix
         run: echo "suffix=-mongodb" >> $GITHUB_OUTPUT
         shell: bash
         if: always()
