@@ -138,6 +138,9 @@ jobs:
       name: ${{ github.event.inputs.environment }}
     needs: prepare-scicat-image
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - id: session-suffx
         run: echo "suffix=-mongodb" >> $GITHUB_OUTPUT
         shell: bash
