@@ -44,9 +44,9 @@ jobs:
           else
             ENV_DIR="integration"
           fi
-    
+          
           echo "Using config from directory: config/${ENV_DIR}"
-         
+          
           mkdir -p config
           if [ -f "config/${ENV_DIR}/functionalAccounts.json" ]; then
             cp "config/${ENV_DIR}/functionalAccounts.json" config/functionalAccounts.json
@@ -80,7 +80,7 @@ jobs:
     name: AWS Authentication for SciCat Backend
     uses: ./.github/workflows/aws-auth.yml
     with:
-      aws-region: ${{ env.AWS_REGION }}
+      aws-region: ${{ vars.AWS_REGION || 'eu-west-1' }}
       role-to-assume: ${{ vars.ROLE_ARN_IMAGE_PUSH }}
       role-session-name: ${{ github.actor_id }}-${{ github.run_id }}
       mask-aws-account-id: false
@@ -128,15 +128,15 @@ jobs:
       image_url: ${{ steps.push-image.outputs.image_url }}
       aws_region: ${{ needs.authenticate-aws-scicat.outputs.aws_region }}
       aws_role_arn: ${{ needs.authenticate-aws-scicat.outputs.aws_role_arn }}
-            
 
-## MongoDB deployment
+
+  ## MongoDB deployment
 
   authenticate-aws-mongodb:
     name: AWS Authentication for MongoDB
     uses: ./.github/workflows/aws-auth.yml
     with:
-      aws-region: ${{ env.AWS_REGION }}
+      aws-region: ${{ vars.AWS_REGION || 'eu-west-1' }}
       role-to-assume: ${{ vars.ROLE_ARN_IMAGE_PUSH }}
       role-session-name: ${{ github.actor_id }}-${{ github.run_id }}-mongodb
       mask-aws-account-id: false
@@ -146,7 +146,9 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: ${{ github.event.inputs.environment }}
-    needs: prepare-scicat-image
+    needs:
+      - prepare-scicat-image
+      - authenticate-aws-mongodb
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
