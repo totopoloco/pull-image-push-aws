@@ -85,7 +85,7 @@ jobs:
 
       - id: credentials-image-push
         name: Configure AWS Credentials
-        uses: ./.github/actions/aws-auth/action.yml
+        uses: ./.github/actions/aws-auth@main
         with:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ vars.ROLE_ARN_IMAGE_PUSH }}
@@ -148,7 +148,7 @@ jobs:
 
       - id: credentials-mongodb-deploy
         name: Configure AWS Credentials
-        uses: ./.github/actions/aws-auth/action.yml
+        uses: ./.github/actions/aws-auth@main
         with:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ vars.ROLE_ARN_IMAGE_PUSH }}
@@ -191,41 +191,41 @@ jobs:
 
 
   deploy-to-ecs-scicat:
-    needs: [prepare-scicat-image]
+    needs: [ prepare-scicat-image ]
     uses: ./.github/workflows/demo_deploy_ecs.yml
     concurrency:
       group: environment-${{ github.ref_name }}
       cancel-in-progress: false
     with:
-      application_container_name: 'to-do'
-      aws_region: 'to-do (it comes from the output of the action.yml)'
-      code_deploy_details_ssm_parameter_path: 'to-do'
-      deploy_mode: 'to-do'
-      ecs_cluster_name: 'to-do'
+      application_container_name: 'scicat-backend'
+      aws_region: ${{ needs.prepare-scicat-image.outputs.aws_region }}
+      code_deploy_details_ssm_parameter_path: '/scicat/deploy/code-details'
+      deploy_mode: 'blue-green'
+      ecs_cluster_name: 'scicat-cluster'
       ecs_deploy_wait_delay_minutes: 8
-      ecs_service_name: 'to-do'
-      environment_name: 'to-do'
+      ecs_service_name: 'scicat-service'
+      environment_name: ${{ github.event.inputs.environment }}
       image_url: ${{ needs.prepare-scicat-image.outputs.image_url }}
-      role_arn_deploy: ${{ needs.prepare-scicat-image.outputs.role_arn_deploy }}
-      task_definition_name: 'to-do'
-      task_template_details_ssm_parameter_path: 'to-do'
+      role_arn_deploy: ${{ needs.prepare-scicat-image.outputs.aws_role_arn }}
+      task_definition_name: 'scicat-task-definition'
+      task_template_details_ssm_parameter_path: '/scicat/deploy/task-template'
 
   deploy-to-ecs-mongodb:
-    needs: [deploy-mongodb]
+    needs: [ deploy-mongodb ]
     uses: ./.github/workflows/demo_deploy_ecs.yml
     concurrency:
       group: environment-${{ github.ref_name }}
       cancel-in-progress: false
     with:
-      application_container_name: 'to-do'
-      aws_region: 'to-do (it comes from the output of the action.yml)'
-      code_deploy_details_ssm_parameter_path: 'to-do'
-      deploy_mode: 'to-do'
-      ecs_cluster_name: 'to-do'
+      application_container_name: 'mongodb'
+      aws_region: ${{ needs.deploy-mongodb.outputs.aws_region }}
+      code_deploy_details_ssm_parameter_path: '/mongodb/deploy/code-details'
+      deploy_mode: 'blue-green'
+      ecs_cluster_name: 'scicat-cluster'
       ecs_deploy_wait_delay_minutes: 8
-      ecs_service_name: 'to-do'
-      environment_name: 'to-do'
-      image_url: ${{ needs.deploy-mongodb.outputs.image_url }}
-      role_arn_deploy: ${{ needs.deploy-mongodb.outputs.role_arn_deploy }}
-      task_definition_name: 'to-do'
-      task_template_details_ssm_parameter_path: 'to-do'
+      ecs_service_name: 'mongodb-service'
+      environment_name: ${{ github.event.inputs.environment }}
+      image_url: ${{ needs.deploy-mongodb.outputs.mongodb_image_url }}
+      role_arn_deploy: ${{ needs.deploy-mongodb.outputs.aws_role_arn }}
+      task_definition_name: 'mongodb-task-definition'
+      task_template_details_ssm_parameter_path: '/mongodb/deploy/task-template'
