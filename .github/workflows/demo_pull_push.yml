@@ -143,8 +143,8 @@ jobs:
         shell: bash
         if: always()
 
-      - name: Configure AWS Credentials
-        id: credentials-mongodb-deploy
+      - id: credentials-mongodb-deploy
+        name: Configure AWS Credentials
         uses: ./.github/actions/aws-auth/action.yml
         with:
           aws-region: ${{ env.AWS_REGION }}

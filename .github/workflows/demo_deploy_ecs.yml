@@ -66,5 +66,3 @@ jobs:
             console.log(`role_arn_deploy: ${{ inputs.role_arn_deploy }}`);
             console.log(`task_definition_name: ${{ inputs.task_definition_name }}`);
             console.log(`task_template_details_ssm_parameter_path: ${{ inputs.task_template_details_ssm_parameter_path }}`);
-
-      -
