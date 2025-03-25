@@ -62,8 +62,7 @@ jobs:
             console.log(`ecs_deploy_wait_delay_minutes: ${{ inputs.ecs_deploy_wait_delay_minutes }}`);
             console.log(`ecs_service_name: ${{ inputs.ecs_service_name }}`);
             console.log(`environment_name: ${{ inputs.environment_name }}`);
-            console.log(`scicat_image_url: ${{ inputs.scicat_image_url }}`);
-            console.log(`mongodb_image_url: ${{ inputs.mongodb_image_url }}`);
+            console.log(`image_url: ${{ inputs.image_url }}`);
             console.log(`role_arn_deploy: ${{ inputs.role_arn_deploy }}`);
             console.log(`task_definition_name: ${{ inputs.task_definition_name }}`);
             console.log(`task_template_details_ssm_parameter_path: ${{ inputs.task_template_details_ssm_parameter_path }}`);
