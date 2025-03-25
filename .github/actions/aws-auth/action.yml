@@ -1,0 +1,45 @@
+name: 'Configure AWS Authentication'
+description: 'Configure AWS credentials for GitHub Actions'
+
+inputs:
+  aws-region:
+    description: 'AWS Region to use'
+    required: true
+  role-to-assume:
+    description: 'ARN of the role to assume'
+    required: true
+  role-session-name:
+    description: 'Name for the role session'
+    required: true
+  mask-aws-account-id:
+    description: 'Whether to mask the AWS account ID in logs'
+    required: false
+    default: 'false'
+
+outputs:
+  aws_region:
+    description: 'The AWS region to use'
+    value: ${{ steps.verify-aws-access.outputs.aws_region }}
+  aws_role_arn:
+    description: 'The ARN of the assumed role'
+    value: ${{ steps.verify-aws-access.outputs.aws_role_arn }}
+
+runs:
+  using: "composite"
+  steps:
+    - id: assume-role
+      name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-region: ${{ inputs.aws-region }}
+        role-to-assume: ${{ inputs.role-to-assume }}
+        role-session-name: ${{ inputs.role-session-name }}
+        mask-aws-account-id: ${{ inputs.mask-aws-account-id }}
+
+    - id: verify-aws-access
+      name: Verify AWS access
+      shell: bash
+      run: |
+        printf "aws_role_arn=%s\n" '${{ vars.ROLE_ARN_DEPLOY }}' >> "$GITHUB_OUTPUT" # make available to later jobs
+        printf "aws_region=%s\n" "$AWS_REGION" >> "$GITHUB_OUTPUT" # make available to later jobs
+        aws sts get-caller-identity --query Arn --output text

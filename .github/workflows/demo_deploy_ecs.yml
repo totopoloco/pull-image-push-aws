@@ -28,10 +28,7 @@ on:
       environment_name:
         required: true
         type: string
-      scicat_image_url:
-        required: true
-        type: string
-      mongodb_image_url:
+      image_url:
         required: true
         type: string
       role_arn_deploy:
@@ -70,3 +67,5 @@ jobs:
             console.log(`role_arn_deploy: ${{ inputs.role_arn_deploy }}`);
             console.log(`task_definition_name: ${{ inputs.task_definition_name }}`);
             console.log(`task_template_details_ssm_parameter_path: ${{ inputs.task_template_details_ssm_parameter_path }}`);
+
+      -

@@ -85,7 +85,7 @@ jobs:
 
       - id: credentials-image-push
         name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: ./.github/actions/aws-auth/action.yml
         with:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ vars.ROLE_ARN_IMAGE_PUSH }}
@@ -128,6 +128,8 @@ jobs:
         if: always()
     outputs:
       image_url: ${{ steps.push-image.outputs.image_url }}
+      aws_region: ${{ steps.credentials-image-push.outputs.aws_region }}
+      aws_role_arn: ${{ steps.credentials-image-push.outputs.aws_role_arn }}
 
   deploy-mongodb:
     name: Deploy MongoDB Container
@@ -136,13 +138,18 @@ jobs:
       name: ${{ github.event.inputs.environment }}
     needs: prepare-scicat-image
     steps:
-      - id: credentials-mongodb-deploy
-        name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - id: session-suffx
+        run: echo "suffix=-mongodb" >> $GITHUB_OUTPUT
+        shell: bash
+        if: always()
+
+      - name: Configure AWS Credentials
+        id: credentials-mongodb-deploy
+        uses: ./.github/actions/aws-auth/action.yml
         with:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ vars.ROLE_ARN_IMAGE_PUSH }}
-          role-session-name: ${{ github.actor_id }}-${{ github.run_id }}-mongodb
+          role-session-name: ${{ github.actor_id }}-${{ github.run_id }}${{ steps.session-suffix.outputs.suffix || '' }}
           mask-aws-account-id: false
 
       - id: login-ecr-mongodb
@@ -174,25 +181,48 @@ jobs:
           echo "mongodb_image_url=${FULL_IMAGE_URL}" >> $GITHUB_OUTPUT
     outputs:
       mongodb_image_url: ${{ steps.push-mongodb-image.outputs.mongodb_image_url }}
+      aws_region: ${{ steps.credentials-mongodb-deploy.outputs.aws_region }}
+      aws_role_arn: ${{ steps.credentials-mongodb-deploy.outputs.aws_role_arn }}
 
-  deploy-to-ecs-scicat-mongodb:
-    needs: [prepare-scicat-image, deploy-mongodb]
+  #We need the output from actions/aws-auth/action.yml for deploy-to-ecs-scicat-mongodb
+
+
+  deploy-to-ecs-scicat:
+    needs: [prepare-scicat-image]
     uses: ./.github/workflows/demo_deploy_ecs.yml
     concurrency:
       group: environment-${{ github.ref_name }}
       cancel-in-progress: false
     with:
       application_container_name: 'to-do'
-      aws_region: ${{ vars.AWS_REGION || 'eu-west-1' }}
+      aws_region: 'to-do (it comes from the output of the action.yml)'
       code_deploy_details_ssm_parameter_path: 'to-do'
       deploy_mode: 'to-do'
       ecs_cluster_name: 'to-do'
       ecs_deploy_wait_delay_minutes: 8
       ecs_service_name: 'to-do'
       environment_name: 'to-do'
-      scicat_image_url: ${{ needs.prepare-scicat-image.outputs.image_url }}
-      mongodb_image_url: ${{ needs.deploy-mongodb.outputs.mongodb_image_url }}
-      role_arn_deploy: 'to-do'
+      image_url: ${{ needs.prepare-scicat-image.outputs.image_url }}
+      role_arn_deploy: ${{ needs.prepare-scicat-image.outputs.role_arn_deploy }}
       task_definition_name: 'to-do'
       task_template_details_ssm_parameter_path: 'to-do'
 
+  deploy-to-ecs-mongodb:
+    needs: [deploy-mongodb]
+    uses: ./.github/workflows/demo_deploy_ecs.yml
+    concurrency:
+      group: environment-${{ github.ref_name }}
+      cancel-in-progress: false
+    with:
+      application_container_name: 'to-do'
+      aws_region: 'to-do (it comes from the output of the action.yml)'
+      code_deploy_details_ssm_parameter_path: 'to-do'
+      deploy_mode: 'to-do'
+      ecs_cluster_name: 'to-do'
+      ecs_deploy_wait_delay_minutes: 8
+      ecs_service_name: 'to-do'
+      environment_name: 'to-do'
+      image_url: ${{ needs.deploy-mongodb.outputs.image_url }}
+      role_arn_deploy: ${{ needs.deploy-mongodb.outputs.role_arn_deploy }}
+      task_definition_name: 'to-do'
+      task_template_details_ssm_parameter_path: 'to-do'
