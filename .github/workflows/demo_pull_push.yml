@@ -178,5 +178,8 @@ jobs:
   deploy-to-ecs-scicat-mongodb:
     needs: [prepare-scicat-image, deploy-mongodb]
     uses: ./.github/workflows/demo_deploy_ecs.yml
+    concurrency:
+      group: environment-${{ github.ref_name }}
+      cancel-in-progress: false
     with:
       aws_region: ${{ vars.AWS_REGION || 'eu-west-1' }}
