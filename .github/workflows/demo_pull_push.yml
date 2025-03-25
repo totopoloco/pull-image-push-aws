@@ -65,14 +65,6 @@ jobs:
           else
             echo "Environment variables file not found, exiting now!" && exit 1
           fi
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-        # Display the login status if the login was successful
-        if: always()
 
       - name: Pull SciCat Docker Image
         run: |
@@ -82,21 +74,28 @@ jobs:
           docker cp config/environment_variables scicat_temp:/home/node/app/.env
           docker commit scicat_temp scicat_configured
         if: always()
-
-      - id: credentials-image-push
-        name: Configure AWS Credentials
-        uses: ./.github/actions/aws-auth/action.yml
-        with:
-          aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: ${{ vars.ROLE_ARN_IMAGE_PUSH }}
-          role-session-name: ${{ github.actor_id }}-${{ github.run_id }}
-          mask-aws-account-id: false # masking would affect unrelated steps if configured
-        if: always()
-
+    outputs:
+      image_url: ${{ steps.push-image.outputs.image_url }}
+  authenticate-aws-scicat:
+    name: AWS Authentication for SciCat Backend
+    uses: ./.github/workflows/aws-auth.yml
+    with:
+      aws-region: ${{ env.AWS_REGION }}
+      role-to-assume: ${{ vars.ROLE_ARN_IMAGE_PUSH }}
+      role-session-name: ${{ github.actor_id }}-${{ github.run_id }}
+      mask-aws-account-id: false
+  push-scicat-image:
+    name: Push SciCat Docker Image to ECR
+    needs:
+      - prepare-scicat-image
+      - authenticate-aws-scicat
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event.inputs.environment }}
+    steps:
       - id: login-ecr-push
         name: Login to AWS ECR
         uses: aws-actions/amazon-ecr-login@v2
-        if: always()
 
       - name: Tag and push SciCat Docker Image
         id: push-image
@@ -125,11 +124,22 @@ jobs:
           docker push ${FULL_IMAGE_URL}
           echo "Pushed image: ${FULL_IMAGE_URL}"
           echo "image_url=${FULL_IMAGE_URL}" >> $GITHUB_OUTPUT
-        if: always()
     outputs:
       image_url: ${{ steps.push-image.outputs.image_url }}
-      aws_region: ${{ steps.credentials-image-push.outputs.aws_region }}
-      aws_role_arn: ${{ steps.credentials-image-push.outputs.aws_role_arn }}
+      aws_region: ${{ needs.authenticate-aws-scicat.outputs.aws_region }}
+      aws_role_arn: ${{ needs.authenticate-aws-scicat.outputs.aws_role_arn }}
+            
+
+## MongoDB deployment
+
+  authenticate-aws-mongodb:
+    name: AWS Authentication for MongoDB
+    uses: ./.github/workflows/aws-auth.yml
+    with:
+      aws-region: ${{ env.AWS_REGION }}
+      role-to-assume: ${{ vars.ROLE_ARN_IMAGE_PUSH }}
+      role-session-name: ${{ github.actor_id }}-${{ github.run_id }}-mongodb
+      mask-aws-account-id: false
 
   deploy-mongodb:
     name: Deploy MongoDB Container
@@ -140,20 +150,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - id: session-suffix
-        run: echo "suffix=-mongodb" >> $GITHUB_OUTPUT
-        shell: bash
-        if: always()
-
-      - id: credentials-mongodb-deploy
-        name: Configure AWS Credentials
-        uses: ./.github/actions/aws-auth/action.yml
-        with:
-          aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: ${{ vars.ROLE_ARN_IMAGE_PUSH }}
-          role-session-name: ${{ github.actor_id }}-${{ github.run_id }}${{ steps.session-suffix.outputs.suffix || '' }}
-          mask-aws-account-id: false
 
       - id: login-ecr-mongodb
         name: Login to AWS ECR
@@ -184,5 +180,3 @@ jobs:
           echo "mongodb_image_url=${FULL_IMAGE_URL}" >> $GITHUB_OUTPUT
     outputs:
       mongodb_image_url: ${{ steps.push-mongodb-image.outputs.mongodb_image_url }}
-      aws_region: ${{ steps.credentials-mongodb-deploy.outputs.aws_region }}
-      aws_role_arn: ${{ steps.credentials-mongodb-deploy.outputs.aws_role_arn }}

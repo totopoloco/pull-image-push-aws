@@ -1,0 +1,45 @@
+name: AWS Authentication
+on:
+  workflow_call:
+    inputs:
+      aws-region:
+        required: true
+        type: string
+      role-to-assume:
+        required: true
+        type: string
+      role-session-name:
+        required: true
+        type: string
+      mask-aws-account-id:
+        required: false
+        type: string
+        default: 'false'
+    outputs:
+      aws_region:
+        value: ${{ jobs.authenticate.outputs.aws_region }}
+      aws_role_arn:
+        value: ${{ jobs.authenticate.outputs.aws_role_arn }}
+      aws_user_id:
+        value: ${{ jobs.authenticate.outputs.aws_user_id }}
+jobs:
+  authenticate:
+    runs-on: ubuntu-latest
+    outputs:
+      aws_region: ${{ steps.export.outputs.aws_region }}
+      aws_role_arn: ${{ steps.export.outputs.aws_role_arn }}
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ inputs.aws-region }}
+          role-to-assume: ${{ inputs.role-to-assume }}
+          role-session-name: ${{ inputs.role-session-name }}
+          mask-aws-account-id: ${{ inputs.mask-aws-account-id }}
+
+      - id: export
+        name: Export AWS Credentials
+        run: |
+          echo "aws_region=${{ inputs.aws-region }}" >> $GITHUB_OUTPUT
+          echo "aws_role_arn=${{ inputs.role-to-assume }}" >> $GITHUB_OUTPUT
+          echo "aws_user_id=$(aws sts get-caller-identity --query Account --output text)" >> $GITHUB_OUTPUT
+        shell: bash
