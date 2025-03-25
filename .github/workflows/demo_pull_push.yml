@@ -24,7 +24,7 @@ permissions:
 jobs:
   scicat-image-to-ecr:
     name: Deploys SciCat Docker Image to ECR
-    uses: ./.github/actions/scicat-image-to-ecr.yml
+    uses: ./.github/workflows/scicat-image-to-ecr.yml
     with:
       environment: ${{ github.event.inputs.environment }}
       aws_region: ${{ vars.AWS_REGION || 'eu-west-1' }}
