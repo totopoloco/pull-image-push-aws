@@ -1,0 +1,54 @@
+name: "Deploy apps in ECS"
+
+# The workflow should only trigger when indirectly invoked
+on:
+  workflow_call:
+    inputs:
+      aws_region:
+        required: true
+        type: string
+#      application_container_name:
+#        required: true
+#        type: string
+#      code_deploy_details_ssm_parameter_path:
+#        required: true
+#        type: string
+#      deploy_mode:
+#        required: true
+#        type: string
+#      ecs_cluster_name:
+#        required: true
+#        type: string
+#      ecs_deploy_wait_delay_minutes:
+#        required: true
+#        type: number
+#      ecs_service_name:
+#        required: true
+#        type: string
+#      environment_name:
+#        required: true
+#        type: string
+#      image_url:
+#        required: true
+#        type: string
+#      role_arn_deploy:
+#        required: true
+#        type: string
+#      task_definition_name:
+#        required: true
+#        type: string
+#      task_template_details_ssm_parameter_path:
+#        required: true
+#        type: string
+
+env:
+    AWS_REGION: ${{ inputs.aws_region }}
+
+jobs:
+  hello-world:
+    env:
+      AWS_REGION: ${{ inputs.aws_region }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hello world
+        run: echo "Hello world"
