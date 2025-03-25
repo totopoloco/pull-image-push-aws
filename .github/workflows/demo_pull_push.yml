@@ -182,4 +182,17 @@ jobs:
       group: environment-${{ github.ref_name }}
       cancel-in-progress: false
     with:
+      application_container_name: 'to-do'
       aws_region: ${{ vars.AWS_REGION || 'eu-west-1' }}
+      code_deploy_details_ssm_parameter_path: 'to-do'
+      deploy_mode: 'to-do'
+      ecs_cluster_name: 'to-do'
+      ecs_deploy_wait_delay_minutes: 8
+      ecs_service_name: 'to-do'
+      environment_name: 'to-do'
+      scicat_image_url: ${{ needs.prepare-scicat-image.outputs.image_url }}
+      mongodb_image_url: ${{ needs.deploy-mongodb.outputs.mongodb_image_url }}
+      role_arn_deploy: 'to-do'
+      task_definition_name: 'to-do'
+      task_template_details_ssm_parameter_path: 'to-do'
+
