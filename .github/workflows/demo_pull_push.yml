@@ -179,4 +179,4 @@ jobs:
     needs: [prepare-scicat-image, deploy-mongodb]
     uses: ./.github/workflows/demo_deploy_ecs.yml
     with:
-      aws_region: ${{ env.AWS_REGION }}
+      aws_region: ${{ vars.AWS_REGION || 'eu-west-1' }}
