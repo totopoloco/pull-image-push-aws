@@ -26,7 +26,7 @@ on:
 
 jobs:
   prepare-scicat:
-    name: Prepare SciCat Docker Image
+    name: Prepare SciCat Docker Image and store it in ECR
     runs-on: ubuntu-latest
     environment:
       name: ${{ inputs.environment }}
