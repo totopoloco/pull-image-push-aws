@@ -43,3 +43,13 @@ jobs:
       aws_region: ${{ vars.AWS_REGION || 'eu-west-1' }}
       mongodb_image: mongo:${{ vars.MONGODB_IMAGE_TAG || '6.0.21' }}
       role_arn_image_push: ${{ vars.ROLE_ARN_IMAGE_PUSH }}
+
+  mongo-ecr-to-ecs:
+    name: Deploy MongoDB Image from ECR to ECS
+    uses: ./.github/workflows/mongodb-ecr-to-ecs.yml
+    needs: mongodb-image-to-ecr # Wait for the previous job to finish
+    with:
+      environment_name: ${{ github.event.inputs.environment }}
+      deploy_mode: ${{ vars.DEPLOY_MODE || 'blue-green' }}
+      aws_region: ${{ vars.AWS_REGION || 'eu-west-1' }}
+      role_arn_ecs: ${{ vars.ROLE_ARN_DEPLOY_ECS }}

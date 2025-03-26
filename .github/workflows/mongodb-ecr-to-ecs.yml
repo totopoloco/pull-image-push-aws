@@ -1,0 +1,47 @@
+name: Deploy MongoDB Image from ECR to ECS
+
+on:
+  workflow_call:
+    inputs:
+      environment_name:
+        required: true
+        type: string
+        description: "The environment to deploy to, e.g. integration, staging, production"
+      aws_region:
+        required: true
+        type: string
+        description: "AWS Region to use, e.g. eu-west-1"
+      deploy_mode:
+        required: true
+        type: string
+        description: "The deployment mode means how the deployment should be done, the values expected are 'blue-green' or 'rolling'"
+      role_arn_ecs:
+        required: true
+        type: string
+        description: "Role ARN for deployment, this role must have the necessary permissions to deploy the application, e.g. arn:aws:iam::123456789012:role/DeployRole"
+
+
+env:
+    AWS_REGION: ${{ inputs.aws_region }}
+
+
+jobs:
+  deploy-app:
+    name: >-
+      ${{ inputs.deploy_mode == 'blue-green' && 'blue/green' || '' }}${{ inputs.deploy_mode != 'blue-green' && inputs.deploy_mode || '' }}
+      (${{inputs.environment_name }})
+    environment:
+      name: ${{ inputs.environment_name }}
+    env:
+      AWS_REGION: ${{ inputs.aws_region }}
+    runs-on: ubuntu-latest
+    steps:
+      - id: assume-role
+        name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ inputs.role_arn_ecs }}
+          role-session-name: ${{ github.actor_id }}-${{ github.run_id }}-mongodb-ecs
+          mask-aws-account-id: false # masking would affect unrelated steps if configured
+        if: always()
