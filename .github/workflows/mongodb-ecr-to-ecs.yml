@@ -22,7 +22,7 @@ on:
 
 
 env:
-    AWS_REGION: ${{ inputs.aws_region }}
+  AWS_REGION: ${{ inputs.aws_region }}
 
 
 jobs:
@@ -36,6 +36,13 @@ jobs:
       AWS_REGION: ${{ inputs.aws_region }}
     runs-on: ubuntu-latest
     steps:
+      - name: Display Role Information
+        run: |
+          echo "Role ARN for deployment: ${{ inputs.role_arn_ecs }}"
+          echo "AWS Region: ${{ inputs.aws_region }}"
+          echo "Environment: ${{ inputs.environment_name }}"
+          echo "Deployment Mode: ${{ inputs.deploy_mode }}"
+
       - id: assume-role
         name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -44,4 +51,9 @@ jobs:
           role-to-assume: ${{ inputs.role_arn_ecs }}
           role-session-name: ${{ github.actor_id }}-${{ github.run_id }}-mongodb-ecs
           mask-aws-account-id: false # masking would affect unrelated steps if configured
+        if: always()
+
+      - id: login-ecr
+        name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
         if: always()
