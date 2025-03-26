@@ -20,9 +20,9 @@ on:
         type: string
         description: "Role ARN for image push"
     outputs:
-      image_url:
+      scicat_image_url:
         description: "The URL of the pushed image"
-        value: ${{ jobs.prepare-scicat.outputs.image_url }}
+        value: ${{ jobs.prepare-scicat.outputs.scicat_image_url }}
 
 jobs:
   prepare-scicat:
@@ -31,7 +31,7 @@ jobs:
     environment:
       name: ${{ inputs.environment }}
     outputs:
-      image_url: ${{ steps.push-image.outputs.image_url }}
+      scicat_image_url: ${{ steps.push-image.outputs.scicat_image_url }}
 
     steps:
       - name: Checkout repository
@@ -129,5 +129,5 @@ jobs:
           docker tag scicat_configured ${FULL_IMAGE_URL}
           docker push ${FULL_IMAGE_URL}
           echo "Pushed image: ${FULL_IMAGE_URL}"
-          echo "image_url=${FULL_IMAGE_URL}" >> $GITHUB_OUTPUT
+          echo "scicat_image_url=${FULL_IMAGE_URL}" >> $GITHUB_OUTPUT
         if: always()
