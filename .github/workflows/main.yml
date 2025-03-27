@@ -1,4 +1,4 @@
-name: "Push images in AWS ECR"
+name: "Main Workflow (Starts the deployment process)"
 run-name: (${{ github.event.inputs.environment }}) Deploy SciCat Backend to AWS (ECR --> ECS) by @${{ github.actor }}
 
 on:
