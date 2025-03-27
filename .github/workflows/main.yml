@@ -52,4 +52,4 @@ jobs:
       environment_name: ${{ github.event.inputs.environment }}
       deploy_mode: ${{ vars.DEPLOY_MODE || 'blue-green' }}
       aws_region: ${{ vars.AWS_REGION || 'eu-west-1' }}
-      role_arn_ecs: ${{ vars.ROLE_ARN_DEPLOY_ECS }}
+      role_arn_ecs: ${{ vars.ROLE_ARN_DEPLOY }}
