@@ -1,5 +1,5 @@
-name: "Deploy images of SciCat backend and MongoDB to AWS in ECR"
-run-name: (${{ github.event.inputs.environment }}) Deploy SciCat Backend to AWS by @${{ github.actor }}
+name: "Push images in AWS ECR"
+run-name: (${{ github.event.inputs.environment }}) Deploy SciCat Backend to AWS (ECR --> ECS) by @${{ github.actor }}
 
 on:
   workflow_dispatch:
