@@ -19,37 +19,52 @@ permissions:
   id-token: write
 
 jobs:
+
+  prepare-deployment:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    outputs:
+      deploy_mode: ${{ vars.DEPLOY_MODE || 'blue-green' }}
+      role_arn_deploy: ${{ vars.ROLE_ARN_DEPLOY }}
+      aws_region: ${{ vars.AWS_REGION || 'eu-west-1' }}
+      mongodb_image_tag: ${{ vars.MONGODB_IMAGE_TAG || '6.0.21' }}
+      scicat_image_tag: ${{ vars.SCICAT_IMAGE_TAG || 'latest' }}
+    steps:
+      - run: echo "Preparing deployment for ${{ github.event.inputs.environment }}"
+
+
   scicat-image-to-ecr:
     name: Deploys SciCat Docker Image to ECR
     uses: ./.github/workflows/scicat-image-to-ecr.yml
+    needs: prepare-deployment
     concurrency:
       group: environment-${{ github.ref_name }}
       cancel-in-progress: false
     with:
       environment: ${{ github.event.inputs.environment }}
-      aws_region: ${{ vars.AWS_REGION || 'eu-west-1' }}
-      scicat_image: ghcr.io/scicatproject/backend-next:${{ vars.SCICAT_IMAGE_TAG || 'latest' }}
-      role_arn_image_push: ${{ vars.ROLE_ARN_IMAGE_PUSH }}
+      aws_region: ${{ needs.prepare-deployment.outputs.aws_region }}
+      scicat_image: ghcr.io/scicatproject/backend-next:${{ needs.prepare-deployment.outputs.scicat_image_tag }}
+      role_arn_image_push: ${{ vars.ROLE_ARN_IMAGE_PUSH }} #This is global, so it is ok to use it in this way.
 
   mongodb-image-to-ecr:
     name: Deploy MongoDB Container to ECR
     uses: ./.github/workflows/mongodb-image-to-ecr.yml
-    needs: [scicat-image-to-ecr] # Wait for the previous job to finish
+    needs: [ scicat-image-to-ecr, prepare-deployment ] # Wait for the previous job to finish
     concurrency:
       group: environment-${{ github.ref_name }}
       cancel-in-progress: false
     with:
       environment: ${{ github.event.inputs.environment }}
-      aws_region: ${{ vars.AWS_REGION || 'eu-west-1' }}
-      mongodb_image: mongo:${{ vars.MONGODB_IMAGE_TAG || '6.0.21' }}
+      aws_region: ${{ needs.prepare-deployment.outputs.aws_region }}
+      mongodb_image: mongo:${{ needs.prepare-deployment.outputs.mongodb_image_tag }}
       role_arn_image_push: ${{ vars.ROLE_ARN_IMAGE_PUSH }}
 
   mongo-ecr-to-ecs:
     name: Deploy MongoDB Image from ECR to ECS
     uses: ./.github/workflows/mongodb-ecr-to-ecs.yml
-    needs: mongodb-image-to-ecr # Wait for the previous job to finish
+    needs: [ mongodb-image-to-ecr, prepare-deployment ] # Wait for the previous job to finish
     with:
       environment_name: ${{ github.event.inputs.environment }}
-      deploy_mode: ${{ vars.DEPLOY_MODE || 'blue-green' }}
-      aws_region: ${{ vars.AWS_REGION || 'eu-west-1' }}
-      role_arn_ecs: ${{ vars.ROLE_ARN_DEPLOY }}
+      deploy_mode: ${{ needs.prepare-deployment.outputs.deploy_mode }}
+      aws_region: ${{ needs.prepare-deployment.outputs.aws_region }}
+      role_arn_ecs: ${{ needs.prepare-deployment.outputs.role_arn_deploy }}

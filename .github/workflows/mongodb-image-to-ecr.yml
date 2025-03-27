@@ -34,6 +34,13 @@ jobs:
       mongodb_image_url: ${{ steps.push-mongodb-image.outputs.mongodb_image_url }}
 
     steps:
+      - name: Display parameters information
+        run: |
+            echo "AWS Region: ${{ inputs.aws_region }}"
+            echo "Environment: ${{ inputs.environment }}"
+            echo "MongoDB Image: ${{ inputs.mongodb_image }}"
+            echo "Role ARN for image push: ${{ inputs.role_arn_image_push }}"
+
       - id: credentials-mongodb-deploy
         name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4

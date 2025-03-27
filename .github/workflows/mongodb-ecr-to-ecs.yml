@@ -36,7 +36,7 @@ jobs:
       AWS_REGION: ${{ inputs.aws_region }}
     runs-on: ubuntu-latest
     steps:
-      - name: Display Role Information
+      - name: Display parameters information
         run: |
           echo "Role ARN for deployment: ${{ inputs.role_arn_ecs }}"
           echo "AWS Region: ${{ inputs.aws_region }}"
